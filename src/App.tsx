@@ -1,8 +1,7 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useGemini } from './hooks/useGemini'
 import { TripCreation } from './components/screens/TripCreation'
-import { LandingPage } from './components/screens/LandingPage'
 
 const GenerationScreen = lazy(() =>
   import('./components/screens/GenerationScreen').then(m => ({ default: m.GenerationScreen }))
@@ -12,7 +11,6 @@ const TripDashboard = lazy(() =>
 )
 
 export default function App() {
-  const [showLanding, setShowLanding] = useState(true)
   const {
     trip,
     appScreen,
@@ -27,19 +25,6 @@ export default function App() {
 
   const isAdapting = appScreen === 'disruption-adapting'
   const showDashboard = appScreen === 'dashboard' || isAdapting
-
-  if (showLanding) {
-    return (
-      <AnimatePresence mode="wait">
-        <motion.div
-          key="landing"
-          exit={{ opacity: 0, scale: 1.03, filter: 'blur(6px)', transition: { duration: 0.5 } }}
-        >
-          <LandingPage onEnter={() => setShowLanding(false)} />
-        </motion.div>
-      </AnimatePresence>
-    )
-  }
 
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: 'rgb(14 14 14)' }}>
