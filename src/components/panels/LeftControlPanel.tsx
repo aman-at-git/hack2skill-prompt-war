@@ -1,9 +1,11 @@
 import { memo } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Users, Calendar, RotateCcw, Sliders } from 'lucide-react'
+import { MapPin, Users, Calendar, RotateCcw, Sliders, CalendarPlus } from 'lucide-react'
 import type { AdaptiveTrip } from '../../types/trip'
 import { DisruptionSimulator } from '../ui/DisruptionSimulator'
 import { formatTripDate } from '../../utils/formatDate'
+import { buildCalendarUrl } from '../../utils/googleCalendar'
+import { trackCalendarExport } from '../../lib/analytics'
 
 interface LeftControlPanelProps {
   trip: AdaptiveTrip
@@ -30,6 +32,14 @@ export const LeftControlPanel = memo(function LeftControlPanel({
   const totalDays = trip.days.length
   const firstDate = trip.days[0]?.date
   const lastDate = trip.days[totalDays - 1]?.date
+
+  function handleCalendarExport() {
+    trackCalendarExport(trip.destination, totalDays)
+    trip.days.forEach((_, i) => {
+      const url = buildCalendarUrl(trip, i)
+      window.open(url, '_blank', 'noopener,noreferrer')
+    })
+  }
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin px-4 py-4 flex flex-col gap-4">
@@ -68,6 +78,18 @@ export const LeftControlPanel = memo(function LeftControlPanel({
             <dd className="text-xs font-medium text-zinc-200">{totalDays} days</dd>
           </div>
         </dl>
+
+        <motion.button
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleCalendarExport}
+          disabled={isAdapting}
+          className="w-full flex items-center justify-center gap-2 py-2 mt-1 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs hover:bg-blue-500/20 hover:border-blue-400/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          aria-label="Export itinerary to Google Calendar"
+        >
+          <CalendarPlus className="w-3.5 h-3.5" aria-hidden="true" />
+          Add to Google Calendar
+        </motion.button>
       </motion.div>
 
       {trip.destination && (

@@ -7,6 +7,7 @@ import type {
 } from '../types/trip'
 import { sanitizeInput, sanitizeOutput } from '../utils/sanitize'
 import { saveTrip } from './useTrips'
+import { trackTripGenerated, trackDisruptionApplied, trackTripReset, trackTripSaved } from '../lib/analytics'
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string
 if (!API_KEY) throw new Error('VITE_GEMINI_API_KEY is not configured')
@@ -303,8 +304,12 @@ Rules:
       pushActivity('decision', `Confidence score: ${parsed.summary.geminiConfidenceScore}%`, setGeminiActivities)
 
       if (currentConstraintsRef.current) {
+        trackTripGenerated(parsed.destination, parsed.days.length, currentConstraintsRef.current.budgetTier)
         saveTrip(parsed, currentConstraintsRef.current)
-          .then(id => setSavedTripId(id))
+          .then(id => {
+            setSavedTripId(id)
+            trackTripSaved(id, parsed.destination)
+          })
           .catch(() => {/* non-critical — don't surface Firebase errors to user */})
       }
 
@@ -327,6 +332,8 @@ Rules:
 
     setAppScreen('disruption-adapting')
     setError(null)
+
+    if (disruptionId) trackDisruptionApplied(disruptionId)
 
     const activityMessages = disruptionId && DISRUPTION_ACTIVITY_TEMPLATES[disruptionId]
       ? DISRUPTION_ACTIVITY_TEMPLATES[disruptionId]
@@ -392,6 +399,7 @@ Return the same JSON structure with these rules:
   const resetToCreation = useCallback(() => {
     abortControllerRef.current?.abort()
     clearStatusTimers()
+    trackTripReset()
     setTrip(null)
     setAppScreen('creation')
     setError(null)
