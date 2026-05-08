@@ -11,6 +11,10 @@ vi.mock('@google/generative-ai', () => ({
   })),
 }))
 
+vi.mock('../hooks/useTrips', () => ({
+  saveTrip: vi.fn().mockResolvedValue('mock-trip-id'),
+}))
+
 import { useGemini } from '../hooks/useGemini'
 import type { AdaptiveTrip, TripConstraints } from '../types/trip'
 

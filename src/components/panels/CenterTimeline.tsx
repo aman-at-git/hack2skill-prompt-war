@@ -1,8 +1,13 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { motion, LayoutGroup } from 'framer-motion'
 import { Calendar } from 'lucide-react'
 import type { AdaptiveTrip } from '../../types/trip'
 import { TimelineCard } from '../ui/TimelineCard'
+
+const DATE_FORMAT: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' }
+function formatDayDate(date: string): string {
+  return new Date(date + 'T00:00:00').toLocaleDateString('en-US', DATE_FORMAT)
+}
 
 interface CenterTimelineProps {
   trip: AdaptiveTrip
@@ -10,6 +15,11 @@ interface CenterTimelineProps {
 }
 
 export const CenterTimeline = memo(function CenterTimeline({ trip, isAdapting }: CenterTimelineProps) {
+  const formattedDates = useMemo(
+    () => Object.fromEntries(trip.days.map(d => [d.date, formatDayDate(d.date)])),
+    [trip.days]
+  )
+
   return (
     <div className="h-full overflow-y-auto scrollbar-thin px-4 py-4">
       <LayoutGroup>
@@ -26,13 +36,7 @@ export const CenterTimeline = memo(function CenterTimeline({ trip, isAdapting }:
                   <Calendar className="w-3.5 h-3.5 text-blue-400" />
                   <span className="text-sm font-semibold text-zinc-200">Day {day.day}</span>
                   {day.date && (
-                    <span className="text-xs text-zinc-500">
-                      {new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
+                    <span className="text-xs text-zinc-500">{formattedDates[day.date]}</span>
                   )}
                 </div>
                 <div className="flex-1 h-px bg-gradient-to-r from-zinc-700/50 to-transparent" />

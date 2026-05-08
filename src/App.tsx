@@ -1,8 +1,14 @@
+import { lazy, Suspense } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useGemini } from './hooks/useGemini'
 import { TripCreation } from './components/screens/TripCreation'
-import { GenerationScreen } from './components/screens/GenerationScreen'
-import { TripDashboard } from './components/screens/TripDashboard'
+
+const GenerationScreen = lazy(() =>
+  import('./components/screens/GenerationScreen').then(m => ({ default: m.GenerationScreen }))
+)
+const TripDashboard = lazy(() =>
+  import('./components/screens/TripDashboard').then(m => ({ default: m.TripDashboard }))
+)
 
 export default function App() {
   const {
@@ -11,6 +17,7 @@ export default function App() {
     error,
     streamingStatus,
     geminiActivities,
+    savedTripId,
     generateItinerary,
     replanItinerary,
     resetToCreation,
@@ -21,6 +28,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-sans" style={{ backgroundColor: 'rgb(14 14 14)' }}>
+      <Suspense fallback={null}>
       <AnimatePresence mode="wait">
         {appScreen === 'creation' && (
           <motion.main
@@ -66,12 +74,14 @@ export default function App() {
               trip={trip}
               geminiActivities={geminiActivities}
               isAdapting={isAdapting}
+              savedTripId={savedTripId}
               onDisruption={replanItinerary}
               onReset={resetToCreation}
             />
           </motion.main>
         )}
       </AnimatePresence>
+      </Suspense>
     </div>
   )
 }

@@ -1,11 +1,12 @@
 import { memo } from 'react'
-import { motion } from 'framer-motion'
-import { Wallet, CloudSun, Footprints, Zap, Brain } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Wallet, CloudSun, Footprints, Zap, Brain, CloudCheck } from 'lucide-react'
 import type { TripSummary } from '../../types/trip'
 
 interface SummaryBarProps {
   summary: TripSummary
   destination: string
+  savedTripId?: string | null
 }
 
 const WALKING_LABELS = { low: 'Easy', medium: 'Moderate', high: 'Active' }
@@ -38,7 +39,7 @@ function ScoreRing({ score, color }: { score: number; color: string }) {
   )
 }
 
-export const SummaryBar = memo(function SummaryBar({ summary, destination }: SummaryBarProps) {
+export const SummaryBar = memo(function SummaryBar({ summary, destination, savedTripId }: SummaryBarProps) {
   const spentPercent = summary.totalBudget > 0
     ? Math.min(100, Math.round((summary.spentBudget / summary.totalBudget) * 100))
     : 0
@@ -53,7 +54,23 @@ export const SummaryBar = memo(function SummaryBar({ summary, destination }: Sum
       <div className="flex items-center justify-center gap-6 overflow-x-auto scrollbar-thin">
         <div className="flex-shrink-0">
           <p className="text-xs text-zinc-500 uppercase tracking-wider mb-0.5">Destination</p>
-          <p className="text-sm font-semibold gemini-gradient-text">{destination}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold gemini-gradient-text">{destination}</p>
+            <AnimatePresence>
+              {savedTripId && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  title={`Saved to Firebase · ID: ${savedTripId}`}
+                  className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                >
+                  <CloudCheck className="w-3 h-3" />
+                  Saved
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <div className="w-px h-8 bg-zinc-800 flex-shrink-0" />

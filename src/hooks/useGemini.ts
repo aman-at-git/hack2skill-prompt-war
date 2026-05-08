@@ -6,16 +6,30 @@ import type {
   ItineraryTimeSlot, TripConstraints, TripDay,
 } from '../types/trip'
 import { sanitizeInput, sanitizeOutput } from '../utils/sanitize'
+import { saveTrip } from './useTrips'
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string
 if (!API_KEY) throw new Error('VITE_GEMINI_API_KEY is not configured')
 
 const genAI = new GoogleGenerativeAI(API_KEY)
+
+// googleSearch grounding requires text output — JSON is extracted from the response
 const model = genAI.getGenerativeModel({
   model: 'gemini-2.0-flash',
-  systemInstruction: 'You are Roamly, an expert travel planning AI. Always respond with valid JSON matching the requested schema exactly.',
-  generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
+  systemInstruction: 'You are Roamly, an expert travel planning AI. Always respond with a single valid JSON object matching the requested schema. No markdown, no explanations, only raw JSON.',
+  generationConfig: { temperature: 0.7 },
+  // SDK types lag behind the API — googleSearch is required for gemini-2.0-flash
+  tools: [{ googleSearch: {} } as object],
 })
+
+function extractJsonFromText(text: string): string {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (fenced) return fenced[1].trim()
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start !== -1 && end !== -1) return text.slice(start, end + 1)
+  return text
+}
 
 export interface UseGeminiReturn {
   trip: AdaptiveTrip | null
@@ -23,6 +37,7 @@ export interface UseGeminiReturn {
   error: string | null
   streamingStatus: string[]
   geminiActivities: GeminiActivity[]
+  savedTripId: string | null
   generateItinerary: (constraints: TripConstraints) => Promise<void>
   replanItinerary: (disruption: string, disruptionId?: string) => Promise<void>
   resetToCreation: () => void
@@ -184,8 +199,11 @@ export function useGemini(): UseGeminiReturn {
   const [streamingStatus, setStreamingStatus] = useState<string[]>([])
   const [geminiActivities, setGeminiActivities] = useState<GeminiActivity[]>([])
 
+  const [savedTripId, setSavedTripId] = useState<string | null>(null)
+
   const abortControllerRef = useRef<AbortController | null>(null)
   const currentTripRef = useRef<AdaptiveTrip | null>(null)
+  const currentConstraintsRef = useRef<TripConstraints | null>(null)
   const statusTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   const clearStatusTimers = useCallback(() => {
@@ -208,10 +226,12 @@ export function useGemini(): UseGeminiReturn {
     const controller = new AbortController()
     abortControllerRef.current = controller
 
+    currentConstraintsRef.current = constraints
     setAppScreen('generating')
     setError(null)
     setStreamingStatus([])
     setGeminiActivities([])
+    setSavedTripId(null)
 
     const messages = buildStatusMessages(constraints)
     runStatusAnimation(messages)
@@ -273,7 +293,7 @@ Rules:
 
       clearStatusTimers()
       const text = result.response.text()
-      const parsed = parseAdaptiveTrip(text)
+      const parsed = parseAdaptiveTrip(extractJsonFromText(text))
 
       currentTripRef.current = parsed
       setTrip(parsed)
@@ -281,6 +301,12 @@ Rules:
       pushActivity('optimization', `Generated ${parsed.days.length}-day itinerary for ${parsed.destination}`, setGeminiActivities)
       pushActivity('calculation', `Budget allocation: ₹${parsed.summary.spentBudget.toLocaleString('en-IN')} of ₹${parsed.summary.totalBudget.toLocaleString('en-IN')}`, setGeminiActivities)
       pushActivity('decision', `Confidence score: ${parsed.summary.geminiConfidenceScore}%`, setGeminiActivities)
+
+      if (currentConstraintsRef.current) {
+        saveTrip(parsed, currentConstraintsRef.current)
+          .then(id => setSavedTripId(id))
+          .catch(() => {/* non-critical — don't surface Firebase errors to user */})
+      }
 
       setAppScreen('dashboard')
     } catch (err: unknown) {
@@ -345,7 +371,7 @@ Return the same JSON structure with these rules:
       if (controller.signal.aborted) return
 
       const text = result.response.text()
-      const parsed = parseAdaptiveTrip(text)
+      const parsed = parseAdaptiveTrip(extractJsonFromText(text))
 
       currentTripRef.current = parsed
       setTrip(parsed)
@@ -371,7 +397,9 @@ Return the same JSON structure with these rules:
     setError(null)
     setStreamingStatus([])
     setGeminiActivities([])
+    setSavedTripId(null)
     currentTripRef.current = null
+    currentConstraintsRef.current = null
   }, [clearStatusTimers])
 
   return {
@@ -380,6 +408,7 @@ Return the same JSON structure with these rules:
     error,
     streamingStatus,
     geminiActivities,
+    savedTripId,
     generateItinerary,
     replanItinerary,
     resetToCreation,

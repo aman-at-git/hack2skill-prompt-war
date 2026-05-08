@@ -10,6 +10,7 @@ interface TripDashboardProps {
   trip: AdaptiveTrip
   geminiActivities: GeminiActivity[]
   isAdapting: boolean
+  savedTripId: string | null
   onDisruption: (description: string, id: string) => void
   onReset: () => void
 }
@@ -18,12 +19,13 @@ export const TripDashboard = memo(function TripDashboard({
   trip,
   geminiActivities,
   isAdapting,
+  savedTripId,
   onDisruption,
   onReset,
 }: TripDashboardProps) {
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <SummaryBar summary={trip.summary} destination={trip.destination} />
+      <SummaryBar summary={trip.summary} destination={trip.destination} savedTripId={savedTripId} />
 
       <div className="flex flex-1 overflow-hidden">
         <motion.aside
