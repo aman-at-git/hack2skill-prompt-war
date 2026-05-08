@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg-base:    14  14  14;
+    --color-bg-surface: 20  20  23;
+    --color-bg-raised:  28  28  32;
+    --color-bg-border:  42  42  50;
+    --gemini-from: #4285f4;
+    --gemini-to:   #9c27b0;
+  }
+
+  html, body {
+    background-color: rgb(var(--color-bg-base));
+    color: rgb(229 229 229);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(28, 28, 32, 0.7);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-hover {
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+
+  .glass-hover:hover {
+    background: rgba(42, 42, 50, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-input {
+    background: rgba(14, 14, 14, 0.8);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgb(229 229 229);
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+  }
+
+  .glass-input:focus {
+    outline: none;
+    border-color: rgba(99, 179, 237, 0.5);
+    box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.08);
+  }
+
+  .glass-input::placeholder {
+    color: rgb(113 113 122);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 20px 2px rgba(99, 179, 237, 0.15);
+  }
+
+  .glow-violet {
+    box-shadow: 0 0 20px 2px rgba(167, 139, 250, 0.15);
+  }
+
+  .glow-amber {
+    box-shadow: 0 0 20px 4px rgba(251, 191, 36, 0.2);
+  }
+
+  .gemini-gradient-text {
+    background: linear-gradient(135deg, var(--gemini-from), var(--gemini-to));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gemini-gradient-border {
+    position: relative;
+  }
+
+  .gemini-gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, var(--gemini-from), var(--gemini-to));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .chip {
+    @apply px-3 py-1.5 rounded-full text-sm font-medium border cursor-pointer transition-all duration-200 select-none;
+  }
+
+  .chip-inactive {
+    @apply chip border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200;
+  }
+
+  .chip-active {
+    @apply chip border-blue-500 bg-blue-500/10 text-blue-300;
+    box-shadow: 0 0 12px 1px rgba(99, 179, 237, 0.12);
+  }
+
+  .chip-vibe-active {
+    @apply chip border-violet-500 bg-violet-500/10 text-violet-300;
+    box-shadow: 0 0 12px 1px rgba(167, 139, 250, 0.12);
+  }
+
+  .timeline-connector {
+    width: 2px;
+    background: linear-gradient(to bottom, rgba(99, 179, 237, 0.3), rgba(167, 139, 250, 0.1));
+  }
+
+  .score-ring {
+    stroke-dasharray: 283;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(42 42 50) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgb(42 42 50);
+    border-radius: 2px;
+  }
+
+  .text-gradient-blue {
+    background: linear-gradient(135deg, #63b3ed, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.04) 50%,
+      rgba(255,255,255,0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
